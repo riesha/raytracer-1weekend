@@ -1,12 +1,13 @@
 use glam::DVec3;
 
-use crate::ray::Ray;
-#[derive(Default, Copy, Clone)]
+use crate::{materials::Material, ray::Ray};
+#[derive(Default, Clone)]
 pub struct HitRecord {
     pub point: DVec3,
     pub normal: DVec3,
     pub t: f64,
     pub front_face: bool,
+    pub material: Material,
 }
 
 impl HitRecord {

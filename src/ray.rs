@@ -31,9 +31,16 @@ impl Ray {
         }
         let mut hit_record = HitRecord::default();
         if world.hit(&self, 0.001, f64::INFINITY, &mut hit_record) {
-            let direction = random_unit_vector() + hit_record.normal;
-            let ray = Ray::new(hit_record.point, direction);
-            return 0.5 * ray.color(world, depth - 1);
+            let mut scattered = Ray::new(DVec3::ZERO, DVec3::ZERO);
+            let mut attenuation = DVec3::ZERO;
+
+            if hit_record
+                .material
+                .scatter(self, &hit_record, &mut attenuation, &mut scattered)
+            {
+                return attenuation * scattered.color(world, depth - 1);
+            }
+            return dvec3(0., 0., 0.);
         }
 
         let unit_dir = *self.direction() / self.direction().length();

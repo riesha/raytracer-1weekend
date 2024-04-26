@@ -2,15 +2,20 @@ use std::ops::Range;
 
 use glam::{dvec3, BVec3, DVec3};
 
-use crate::hittable::Hittable;
+use crate::{hittable::Hittable, materials::Material};
 #[derive(Default)]
 pub struct Sphere {
     center: DVec3,
     radius: f64,
+    material: Material,
 }
 impl Sphere {
-    pub fn new(center: DVec3, radius: f64) -> Self {
-        Self { center, radius }
+    pub fn new(center: DVec3, radius: f64, material: Material) -> Self {
+        Self {
+            center,
+            radius,
+            material,
+        }
     }
 }
 impl Hittable for Sphere {
@@ -47,6 +52,7 @@ impl Hittable for Sphere {
 
         let outward_normal = (hit_record.point - self.center) / self.radius;
         hit_record.set_face_normal(&ray, &outward_normal);
+        hit_record.material = self.material.clone();
 
         return true;
     }
