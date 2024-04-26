@@ -2,7 +2,7 @@ use glam::{dvec3, DVec3};
 
 use crate::{
     hittable::{HitRecord, Hittable},
-    utils::random_on_hemisphere,
+    utils::{random_on_hemisphere, random_unit_vector},
 };
 
 pub struct Ray {
@@ -31,7 +31,7 @@ impl Ray {
         }
         let mut hit_record = HitRecord::default();
         if world.hit(&self, 0.001, f64::INFINITY, &mut hit_record) {
-            let direction = random_on_hemisphere(&hit_record.normal);
+            let direction = random_unit_vector() + hit_record.normal;
             let ray = Ray::new(hit_record.point, direction);
             return 0.5 * ray.color(world, depth - 1);
         }

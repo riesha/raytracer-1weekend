@@ -1,3 +1,4 @@
+pub mod materials;
 pub mod camera;
 pub mod utils;
 pub mod shapes;
