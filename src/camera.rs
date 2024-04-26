@@ -16,6 +16,7 @@ pub struct Camera {
     pixel_delta_v: DVec3,
     samples_per_pixel: i32,
     pixel_samples_scale: f64,
+    max_depth: u32,
 }
 
 impl Camera {
@@ -51,6 +52,7 @@ impl Camera {
             pixel_delta_v,
             samples_per_pixel,
             pixel_samples_scale,
+            max_depth: 50,
         }
     }
     pub fn render(&self, world: &impl Hittable) -> std::io::Result<()> {
@@ -71,7 +73,7 @@ impl Camera {
 
                 for _ in 0..self.samples_per_pixel {
                     let ray = self.get_ray(i, j);
-                    pixel_color += ray.color(world);
+                    pixel_color += ray.color(world, self.max_depth);
                 }
 
                 write_color(&mut image_buffer, self.pixel_samples_scale * pixel_color);

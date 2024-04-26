@@ -1,9 +1,6 @@
-use std::{fs::File, io::Write, time::Instant};
-
 use glam::dvec3;
-use indicatif::ProgressIterator;
-use itertools::Itertools;
-use raytracer_1weekend::{camera::Camera, color::write_color, ray::Ray, shapes::Sphere};
+
+use raytracer_1weekend::{camera::Camera, shapes::Sphere};
 
 fn main() -> std::io::Result<()> {
     let mut hittable_list: Vec<Sphere> = Vec::new();
