@@ -23,7 +23,14 @@ fn main() -> std::io::Result<()> {
         dvec3(-1.0, 0.0, -1.0),
         0.5,
         raytracer_1weekend::materials::Material::Dielectric {
-            index_of_refraction: 1.0 / 1.33,
+            index_of_refraction: 1.5,
+        },
+    ));
+    hittable_list.push(Sphere::new(
+        dvec3(-1.0, 0.0, -1.0),
+        0.4,
+        raytracer_1weekend::materials::Material::Dielectric {
+            index_of_refraction: 1.0 / 1.5,
         },
     ));
     hittable_list.push(Sphere::new(
@@ -34,7 +41,14 @@ fn main() -> std::io::Result<()> {
             fuzz: 1.0,
         },
     ));
-    let camera = Camera::new(16.0 / 9.0, 400, 10);
+    let camera = Camera::new(
+        16.0 / 9.0,
+        400,
+        100,
+        dvec3(-2.0, 2.0, 1.0),
+        dvec3(0.0, 0.0, -1.0),
+        dvec3(0.0, 1.0, 0.0),
+    );
 
     camera.render(&hittable_list)?;
     Ok(())

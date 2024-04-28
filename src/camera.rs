@@ -4,7 +4,12 @@ use glam::{dvec3, DVec3};
 use indicatif::ProgressIterator;
 use itertools::Itertools;
 
-use crate::{color::write_color, hittable::Hittable, ray::Ray, utils::randf64};
+use crate::{
+    color::write_color,
+    hittable::Hittable,
+    ray::Ray,
+    utils::{deg2rad, randf64},
+};
 #[derive(Default)]
 pub struct Camera {
     pub aspect_ratio: f64,
@@ -17,28 +22,50 @@ pub struct Camera {
     samples_per_pixel: i32,
     pixel_samples_scale: f64,
     max_depth: u32,
+    fov: f64,
+    lookfrom: DVec3,
+    lookat: DVec3,
+    vup: DVec3,
+    u: DVec3,
+    v: DVec3,
+    w: DVec3,
 }
 
 impl Camera {
-    pub fn new(aspect_ratio: f64, image_width: i32, samples_per_pixel: i32) -> Self {
+    pub fn new(
+        aspect_ratio: f64,
+        image_width: i32,
+        samples_per_pixel: i32,
+        lookfrom: DVec3,
+        lookat: DVec3,
+        vup: DVec3,
+    ) -> Self {
         let image_height =
             ((image_width as f64 / aspect_ratio) as i32).clamp(1, image_width as i32);
+        let fov = 90.0f64;
 
-        let focal_length = 1.0;
-        let viewport_height = 2.0;
+        let theta = fov.to_radians();
+        let h = (theta / 2.0).tan();
+
+        let center = lookfrom;
+
+        let focal_length = (lookfrom - lookat).length();
+        let viewport_height = 2.0 * h * focal_length;
         let viewport_width = viewport_height * (image_width as f64 / image_height as f64);
-        let center = dvec3(0.0, 0.0, 0.0);
+
+        let w = (lookfrom - lookat).normalize();
+        let u = vup.cross(w).normalize();
+        let v = w.cross(u);
 
         // U = horizontal +X // V = vertical -Y
-        let viewport_u = dvec3(viewport_width, 0.0, 0.0);
-        let viewport_v = dvec3(0.0, -viewport_height, 0.0);
+        let viewport_u = viewport_width * u;
+        let viewport_v = viewport_height * (-v);
 
         // Space between pixels for uniform distribution
         let pixel_delta_u = viewport_u / image_width as f64;
         let pixel_delta_v = viewport_v / image_height as f64;
 
-        let viewport_upper_left =
-            center - dvec3(0.0, 0.0, focal_length) - viewport_u / 2.0 - viewport_v / 2.0;
+        let viewport_upper_left = center - (focal_length * w) - viewport_u / 2.0 - viewport_v / 2.0;
         let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
 
         let pixel_samples_scale = 1.0 / samples_per_pixel as f64;
@@ -53,6 +80,13 @@ impl Camera {
             samples_per_pixel,
             pixel_samples_scale,
             max_depth: 50,
+            fov,
+            lookfrom,
+            lookat,
+            vup,
+            u,
+            v,
+            w,
         }
     }
     pub fn render(&self, world: &impl Hittable) -> std::io::Result<()> {
