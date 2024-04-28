@@ -8,7 +8,7 @@ use crate::{
     color::write_color,
     hittable::Hittable,
     ray::Ray,
-    utils::{deg2rad, randf64},
+    utils::{deg2rad, randf64, random_in_unit_disk},
 };
 #[derive(Default)]
 pub struct Camera {
@@ -29,28 +29,34 @@ pub struct Camera {
     u: DVec3,
     v: DVec3,
     w: DVec3,
+    defocus_angle: f64,
+    focus_dist: f64,
+    defocus_disk_u: DVec3,
+    defocus_disk_v: DVec3,
 }
 
 impl Camera {
     pub fn new(
         aspect_ratio: f64,
         image_width: i32,
+        fov: f64,
         samples_per_pixel: i32,
         lookfrom: DVec3,
         lookat: DVec3,
         vup: DVec3,
+        focus_dist: f64,
+        defocus_angle: f64,
     ) -> Self {
         let image_height =
             ((image_width as f64 / aspect_ratio) as i32).clamp(1, image_width as i32);
-        let fov = 90.0f64;
 
         let theta = fov.to_radians();
         let h = (theta / 2.0).tan();
 
         let center = lookfrom;
 
-        let focal_length = (lookfrom - lookat).length();
-        let viewport_height = 2.0 * h * focal_length;
+        // let focal_length = (lookfrom - lookat).length();
+        let viewport_height = 2.0 * h * focus_dist;
         let viewport_width = viewport_height * (image_width as f64 / image_height as f64);
 
         let w = (lookfrom - lookat).normalize();
@@ -65,8 +71,12 @@ impl Camera {
         let pixel_delta_u = viewport_u / image_width as f64;
         let pixel_delta_v = viewport_v / image_height as f64;
 
-        let viewport_upper_left = center - (focal_length * w) - viewport_u / 2.0 - viewport_v / 2.0;
+        let viewport_upper_left = center - (focus_dist * w) - viewport_u / 2.0 - viewport_v / 2.0;
         let pixel00_loc = viewport_upper_left + 0.5 * (pixel_delta_u + pixel_delta_v);
+
+        let defocus_radius = focus_dist * (defocus_angle / 2.0).to_radians().tan();
+        let defocus_disk_u = u * defocus_radius;
+        let defocus_disk_v = v * defocus_radius;
 
         let pixel_samples_scale = 1.0 / samples_per_pixel as f64;
         Self {
@@ -87,6 +97,10 @@ impl Camera {
             u,
             v,
             w,
+            defocus_angle,
+            focus_dist,
+            defocus_disk_u,
+            defocus_disk_v,
         }
     }
     pub fn render(&self, world: &impl Hittable) -> std::io::Result<()> {
@@ -122,12 +136,20 @@ impl Camera {
         let pixel_sample = self.pixel00_loc
             + ((width as f64 + offset.x) * self.pixel_delta_u)
             + ((height as f64 + offset.y) * self.pixel_delta_v);
-        let ray_origin = self.center;
+        let ray_origin = if self.defocus_angle <= 0.0 {
+            self.center
+        } else {
+            self.defocus_disk_sample()
+        };
         let ray_dir = pixel_sample - ray_origin;
         Ray::new(ray_origin, ray_dir)
     }
     #[inline(always)]
     fn sample_square() -> DVec3 {
         dvec3(randf64(None) - 0.5, randf64(None) - 0.5, 0.)
+    }
+    fn defocus_disk_sample(&self) -> DVec3 {
+        let p = random_in_unit_disk();
+        self.center + (p.x * self.defocus_disk_u) + (p.y * self.defocus_disk_v)
     }
 }

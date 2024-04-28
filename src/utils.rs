@@ -45,3 +45,13 @@ pub fn random_on_hemisphere(normal: &DVec3) -> DVec3 {
         -on_unit_sphere
     }
 }
+pub fn random_in_unit_disk() -> DVec3 {
+    let mut rng = rand::thread_rng();
+    loop {
+        let v = DVec3::new(rng.gen_range(-1.0..1.), rng.gen_range(-1.0..1.), 0.);
+
+        if v.length_squared() < 1. {
+            break v;
+        }
+    }
+}
